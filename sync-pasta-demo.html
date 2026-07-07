@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sync de Pasta — Demo</title>
+<style>
+  :root {
+    --bg: #1a1d21;
+    --card: #24282e;
+    --border: #363b42;
+    --text: #e8e8e8;
+    --muted: #8a919b;
+    --amber: #f5a623;
+    --green: #3ecf5c;
+    --red: #e5484d;
+    --blue: #4a9eff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  h1 { font-family: 'Oswald', sans-serif; font-weight: 500; letter-spacing: 0.5px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  button {
+    background: var(--amber);
+    color: #1a1d21;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover { filter: brightness(1.1); }
+  button.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  #status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-off { background: rgba(229,72,77,0.15); color: var(--red); }
+  .status-off .dot { background: var(--red); }
+  .status-on { background: rgba(62,207,92,0.15); color: var(--green); }
+  .status-on .dot { background: var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  #log {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: #14161a;
+    border-radius: 6px;
+    padding: 12px;
+    height: 220px;
+    overflow-y: auto;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .log-line { color: var(--text); }
+  .log-time { color: var(--muted); }
+  code { background: #14161a; padding: 2px 6px; border-radius: 4px; color: var(--blue); }
+</style>
+</head>
+<body>
+
+<h1>🔗 Sync de Pasta Local</h1>
+<p style="color:var(--muted)">Conecte uma pasta uma vez. O site fica de olho no arquivo e reprocessa sozinho quando ele muda no disco.</p>
+
+<div class="card">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+    <span id="status" class="status-off"><span class="dot"></span> Desconectado</span>
+  </div>
+  <button id="btnConectar">📁 Conectar pasta</button>
+  <button id="btnDesconectar" class="secondary" style="display:none; margin-left:8px;">Desconectar</button>
+  <p id="arquivoInfo" style="color:var(--muted); font-size:13px; margin-top:12px;"></p>
+</div>
+
+<div class="card">
+  <strong style="display:block; margin-bottom:10px;">Log</strong>
+  <div id="log"></div>
+</div>
+
+<script>
+// ================== CONFIG ==================
+const NOME_ARQUIVO = 'dados.txt'; // <-- troque pelo nome real do seu arquivo (ex: posicao_enderecos.txt)
+const INTERVALO_CHECAGEM_MS = 3000; // checa a cada 3s
+const DB_NAME = 'sync-pasta-db';
+const STORE_NAME = 'handles';
+
+// ================== ESTADO ==================
+let dirHandle = null;
+let fileHandle = null;
+let lastModified = 0;
+let intervalId = null;
+
+const btnConectar = document.getElementById('btnConectar');
+const btnDesconectar = document.getElementById('btnDesconectar');
+const statusEl = document.getElementById('status');
+const arquivoInfo = document.getElementById('arquivoInfo');
+const logEl = document.getElementById('log');
+
+function log(msg, tipo = 'info') {
+  const hora = new Date().toLocaleTimeString('pt-BR');
+  const linha = document.createElement('div');
+  linha.className = 'log-line';
+  linha.innerHTML = `<span class="log-time">[${hora}]</span> ${msg}`;
+  logEl.prepend(linha);
+}
+
+function setStatus(conectado) {
+  if (conectado) {
+    statusEl.className = 'status-on';
+    statusEl.innerHTML = '<span class="dot"></span> Conectado — monitorando';
+    btnConectar.style.display = 'none';
+    btnDesconectar.style.display = 'inline-block';
+  } else {
+    statusEl.className = 'status-off';
+    statusEl.innerHTML = '<span class="dot"></span> Desconectado';
+    btnConectar.style.display = 'inline-block';
+    btnDesconectar.style.display = 'none';
+  }
+}
+
+// ================== INDEXEDDB (persistir o handle da pasta) ==================
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function salvarHandle(handle) {
+  const db = await abrirDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(handle, 'pastaDados');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function carregarHandle() {
+  const db = await abrirDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get('pastaDados');
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function limparHandle() {
+  const db = await abrirDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  tx.objectStore(STORE_NAME).delete('pastaDados');
+}
+
+// ================== PERMISSÕES ==================
+async function garantirPermissao(handle) {
+  const opcoes = { mode: 'read' };
+  if ((await handle.queryPermission(opcoes)) === 'granted') return true;
+  if ((await handle.requestPermission(opcoes)) === 'granted') return true;
+  return false;
+}
+
+// ================== FLUXO PRINCIPAL ==================
+async function conectarPasta() {
+  try {
+    dirHandle = await window.showDirectoryPicker();
+    await salvarHandle(dirHandle);
+    await iniciarMonitoramento();
+  } catch (err) {
+    if (err.name !== 'AbortError') log(`Erro ao conectar: ${err.message}`);
+  }
+}
+
+async function iniciarMonitoramento() {
+  try {
+    fileHandle = await dirHandle.getFileHandle(NOME_ARQUIVO);
+  } catch (err) {
+    log(`⚠️ Arquivo "${NOME_ARQUIVO}" não encontrado nessa pasta.`);
+    return;
+  }
+
+  const file = await fileHandle.getFile();
+  lastModified = file.lastModified;
+  arquivoInfo.textContent = `Monitorando: ${NOME_ARQUIVO} (pasta: ${dirHandle.name})`;
+  setStatus(true);
+  log(`✅ Conectado. Carga inicial processada.`);
+  await processarDados(await file.text());
+
+  if (intervalId) clearInterval(intervalId);
+  intervalId = setInterval(checarMudanca, INTERVALO_CHECAGEM_MS);
+}
+
+async function checarMudanca() {
+  try {
+    const file = await fileHandle.getFile();
+    if (file.lastModified !== lastModified) {
+      lastModified = file.lastModified;
+      log(`🔄 Mudança detectada — reprocessando...`);
+      await processarDados(await file.text());
+      log(`✅ Reprocessado com sucesso.`);
+    }
+  } catch (err) {
+    log(`⚠️ Erro ao checar arquivo: ${err.message}`);
+  }
+}
+
+function desconectar() {
+  if (intervalId) clearInterval(intervalId);
+  intervalId = null;
+  dirHandle = null;
+  fileHandle = null;
+  limparHandle();
+  setStatus(false);
+  arquivoInfo.textContent = '';
+  log('🔌 Desconectado.');
+}
+
+// ================== SUA LÓGICA DE VERDADE ENTRA AQUI ==================
+async function processarDados(textoArquivo) {
+  // Substitua isso pela sua função real de parsing
+  // (ex: a que já processa Posição de Endereços, Metabase pedidos, etc)
+  const linhas = textoArquivo.trim().split('\n');
+  log(`📊 Arquivo tem ${linhas.length} linha(s). (troque essa função pela sua lógica real)`);
+}
+
+// ================== RECONEXÃO AUTOMÁTICA AO ABRIR A PÁGINA ==================
+async function tentarReconectarAutomaticamente() {
+  const handleSalvo = await carregarHandle();
+  if (!handleSalvo) return;
+
+  const temPermissao = await garantirPermissao(handleSalvo);
+  if (!temPermissao) {
+    log('ℹ️ Pasta salva encontrada, mas é preciso reconectar manualmente (permissão do navegador expirou).');
+    return;
+  }
+
+  dirHandle = handleSalvo;
+  await iniciarMonitoramento();
+}
+
+btnConectar.addEventListener('click', conectarPasta);
+btnDesconectar.addEventListener('click', desconectar);
+
+// ao carregar a página, tenta reconectar sozinho
+tentarReconectarAutomaticamente();
+</script>
+
+</body>
+</html>
