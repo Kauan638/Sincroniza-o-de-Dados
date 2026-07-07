@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sync Pasta Mestre</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>🔗 Sync — Pasta Mestre</h1>
+<p style="color:var(--muted)">Conecta a pasta mestre uma vez. O site varre todas as subpastas de projetos e monitora os arquivos sozinho.</p>
+
+<div class="card">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+    <span id="status" class="status-off"><span class="dot"></span> Desconectado</span>
+  </div>
+  <button id="btnConectar">📁 Conectar pasta mestre</button>
+  <button id="btnRevarrer" class="secondary" style="display:none; margin-left:8px;">🔄 Revarrer</button>
+  <button id="btnDesconectar" class="secondary" style="display:none; margin-left:8px;">Desconectar</button>
+
+  <div class="kpi-row" style="margin-top:16px;">
+    <div class="kpi-card"><div class="num" id="kpiProjetos">0</div><div class="label">Projetos</div></div>
+    <div class="kpi-card"><div class="num" id="kpiArquivos">0</div><div class="label">Arquivos</div></div>
+    <div class="kpi-card"><div class="num" id="kpiCiclo">-</div><div class="label">Última checagem</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <strong style="display:block; margin-bottom:10px;">Estrutura encontrada</strong>
+  <div id="arvore" style="color:var(--muted); font-size:13px;">Nenhuma pasta conectada ainda.</div>
+</div>
+
+<div class="card">
+  <strong style="display:block; margin-bottom:10px;">Log</strong>
+  <div id="log"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
