@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync Pasta Mestre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+:root {
+  color-scheme: dark;
+  --bg: #101215;
+  --panel: #1a1f27;
+  --panel-strong: #202733;
+  --panel-soft: #151920;
+  --border: #313947;
+  --border-soft: #28313d;
+  --text: #f2f5f8;
+  --muted: #99a4b5;
+  --muted-strong: #c2cad6;
+  --accent: #f6b23b;
+  --accent-strong: #ffd37a;
+  --success: #3edb76;
+  --danger: #f05d63;
+  --info: #61a8ff;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(246, 178, 59, 0.11), transparent 31rem),
+    linear-gradient(145deg, #101215 0%, #151922 46%, #0f1216 100%);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  animation: pageGlowIn 700ms ease-out both;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.brand-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, rgba(246, 178, 59, 0.18), transparent 28rem),
+    #0b0d10;
+  animation: introExit 1.65s ease-in-out 1.45s both;
+  pointer-events: none;
+}
+
+.brand-logo-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 46px);
+  width: min(880px, calc(100vw - 32px));
+  padding: clamp(18px, 3vw, 28px) clamp(20px, 4vw, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+}
+
+.brand-logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(16px) scale(0.94);
+}
+
+.brand-logo-zaffari {
+  width: min(450px, 51vw);
+  animation: logoReveal 950ms cubic-bezier(0.19, 1, 0.22, 1) 120ms both;
+}
+
+.brand-logo-stok {
+  width: min(300px, 34vw);
+  animation: logoReveal 950ms cubic-bezier(0.19, 1, 0.22, 1) 420ms both;
+}
+
+.brand-divider {
+  width: 1px;
+  height: clamp(82px, 13vw, 128px);
+  background: linear-gradient(to bottom, transparent, rgba(16, 18, 21, 0.22), transparent);
+  opacity: 0;
+  animation: dividerReveal 700ms ease-out 320ms both;
+}
+
+.shell {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+  animation: riseIn 620ms ease-out 80ms both;
+}
+
+.eyebrow,
+.panel-kicker {
+  margin: 0 0 6px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  max-width: 760px;
+  font-size: clamp(34px, 6vw, 64px);
+  line-height: 0.95;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.subtitle {
+  max-width: 720px;
+  margin: 16px 0 0;
+  color: var(--muted-strong);
+  font-size: 16px;
+}
+
+.control-panel,
+.panel {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.control-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) 1.2fr;
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+  padding: 18px;
+  border-radius: 8px;
+  animation: riseIn 620ms ease-out 180ms both;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 16px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease, filter 150ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:focus-visible,
+.projeto-header:focus-visible {
+  outline: 3px solid rgba(97, 168, 255, 0.34);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #17130c;
+}
+
+button.secondary {
+  background: var(--panel-strong);
+  border-color: var(--border);
+}
+
+button.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted-strong);
+}
+
+#status {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 34px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.status-off {
+  background: rgba(240, 93, 99, 0.12);
+  color: var(--danger);
+}
+
+.status-off .dot {
+  background: var(--danger);
+}
+
+.status-on {
+  background: rgba(62, 219, 118, 0.12);
+  color: var(--success);
+}
+
+.status-on .dot {
+  background: var(--success);
+  animation: pulse 1.5s infinite;
+}
+
+.status-scan {
+  background: rgba(97, 168, 255, 0.12);
+  color: var(--info);
+}
+
+.status-scan .dot {
+  background: var(--info);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes pageGlowIn {
+  from {
+    background-color: #08090b;
+  }
+  to {
+    background-color: var(--bg);
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes logoReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+    filter: blur(8px);
+  }
+  58% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes dividerReveal {
+  from {
+    opacity: 0;
+    transform: scaleY(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes introExit {
+  0% {
+    opacity: 1;
+    visibility: visible;
+  }
+  72% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi-card {
+  min-height: 86px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  text-align: center;
+}
+
+.kpi-card .num {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.kpi-card .label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 18px;
+}
+
+.panel {
+  min-width: 0;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.structure-panel {
+  animation: riseIn 620ms ease-out 280ms both;
+}
+
+.log-panel {
+  animation: riseIn 620ms ease-out 360ms both;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.tree-empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: rgba(21, 25, 32, 0.7);
+  color: var(--muted);
+  padding: 22px;
+  text-align: center;
+}
+
+.projeto {
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  margin-bottom: 10px;
+}
+
+.projeto-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--panel-strong);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.projeto-header:hover {
+  background: #28313e;
+}
+
+.projeto-count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.arquivos {
+  display: none;
+  padding: 6px 14px 12px;
+}
+
+.arquivos.aberto {
+  display: block;
+}
+
+.arquivo-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 32px;
+  border-top: 1px solid #2b3441;
+  color: var(--muted);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+.arquivo-linha:first-child {
+  border-top: 0;
+}
+
+.arquivo-nome {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+.arquivo-tempo {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+#log {
+  height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: #0f1217;
+  color: var(--muted-strong);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 14px;
+}
+
+.log-time {
+  color: var(--accent-strong);
+}
+
+@media (max-width: 820px) {
+  .shell {
+    width: min(100% - 24px, 680px);
+    padding: 28px 0;
+  }
+
+  .page-header,
+  .control-panel,
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    display: grid;
+    gap: 16px;
+  }
+
+  .actions {
+    align-items: stretch;
+  }
+
+  button {
+    flex: 1 1 160px;
+  }
+}
+
+@media (max-width: 560px) {
+  .shell {
+    width: min(100% - 20px, 520px);
+  }
+
+  .control-panel,
+  .panel {
+    padding: 14px;
+  }
+
+  .actions,
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    display: grid;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  #status {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .kpi-row {
+    display: grid;
+  }
+
+  .workspace-grid {
+    gap: 14px;
+  }
+
+  #log {
+    height: 260px;
+  }
+
+  .brand-logo-pair {
+    grid-template-columns: 1fr;
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    text-align: center;
+    padding: 18px;
+  }
+
+  .brand-logo-zaffari {
+    width: min(430px, 78vw);
+  }
+
+  .brand-logo-stok {
+    width: min(300px, 58vw);
+  }
+
+  .brand-divider {
+    width: min(280px, 70vw);
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(16, 18, 21, 0.22), transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="brand-intro" aria-hidden="true">
+    <div class="brand-logo-pair">
+        <img class="brand-logo brand-logo-zaffari" src="https://comercialzaffarihelp.zendesk.com/hc/theming_assets/01HZPQ2EGTWBGW3PR1BW2SW3ZP" alt="">
+      <span class="brand-divider"></span>
+        <img class="brand-logo brand-logo-stok" src="https://stokcenterhelp.zendesk.com/hc/theming_assets/01HZPQ2GE0WA6QDMW5997Y5HSH" alt="">
+    </div>
+  </div>
+
+  <main class="shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Monitor local de dados</p>
+        <h1>Sync Pasta Mestre</h1>
+        <p class="subtitle">Conecte uma pasta mestre uma vez. A interface varre os projetos, monitora arquivos de dados e mantém o histórico de atividade visível.</p>
+      </div>
+      <span id="status" class="status-off"><span class="dot"></span> Desconectado</span>
+    </header>
+
+    <section class="control-panel" aria-label="Controles da sincronização">
+      <div class="actions">
+        <button id="btnConectar" class="primary">Conectar pasta mestre</button>
+        <button id="btnRevarrer" class="secondary" style="display:none;">Revarrer</button>
+        <button id="btnDesconectar" class="ghost" style="display:none;">Desconectar</button>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="num" id="kpiProjetos">0</div>
+          <div class="label">Projetos</div>
+        </div>
+        <div class="kpi-card">
+          <div class="num" id="kpiArquivos">0</div>
+          <div class="label">Arquivos</div>
+        </div>
+        <div class="kpi-card">
+          <div class="num" id="kpiCiclo">-</div>
+          <div class="label">Última checagem</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="panel structure-panel">
+        <div class="panel-title-row">
+          <div>
+            <p class="panel-kicker">Pastas e arquivos</p>
+            <h2>Estrutura encontrada</h2>
+          </div>
+        </div>
+        <div id="arvore" class="tree-empty">Nenhuma pasta conectada ainda.</div>
+      </article>
+
+      <article class="panel log-panel">
+        <div class="panel-title-row">
+          <div>
+            <p class="panel-kicker">Atividade</p>
+            <h2>Log</h2>
+          </div>
+        </div>
+        <div id="log"><div><span class="log-time">[--:--:--]</span> Aguardando conexão da pasta mestre.</div></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+// ================================================================
+// CONFIG
+// ================================================================
+// Extensões que o monitor vai considerar "arquivos de dados" (ignora o resto)
+const EXTENSOES_MONITORADAS = ['.txt', '.csv', '.xlsx', '.xls', '.json'];
+
+// Tamanho do lote de checagem por "tick" — em vez de checar 200 arquivos
+// de uma vez, espalha em lotes pequenos pra não travar a aba.
+const TAMANHO_LOTE = 15;
+const INTERVALO_LOTE_MS = 400;   // tempo entre cada lote
+const INTERVALO_CICLO_COMPLETO_MS = 8000; // a cada quanto tempo reinicia a varredura completa
+
+const DB_NAME = 'sync-pasta-mestre-db';
+const STORE_NAME = 'handles';
+
+// ================================================================
+// ESTADO
+// ================================================================
+let masterHandle = null;
+// registro: [{ projeto, caminho, nome, handle, lastModified }]
+let registro = [];
+let filaChecagem = [];
+let indiceFila = 0;
+let timeoutLote = null;
+let timeoutCiclo = null;
+
+const btnConectar = document.getElementById('btnConectar');
+const btnRevarrer = document.getElementById('btnRevarrer');
+const btnDesconectar = document.getElementById('btnDesconectar');
+const statusEl = document.getElementById('status');
+const arvoreEl = document.getElementById('arvore');
+const logEl = document.getElementById('log');
+const kpiProjetos = document.getElementById('kpiProjetos');
+const kpiArquivos = document.getElementById('kpiArquivos');
+const kpiCiclo = document.getElementById('kpiCiclo');
+
+function log(msg) {
+  const hora = new Date().toLocaleTimeString('pt-BR');
+  const linha = document.createElement('div');
+  linha.innerHTML = `<span class="log-time">[${hora}]</span> ${msg}`;
+  logEl.prepend(linha);
+  // limita o log a 150 linhas pra não crescer infinito
+  while (logEl.children.length > 150) logEl.removeChild(logEl.lastChild);
+}
+
+function setStatus(tipo) {
+  // tipo: 'off' | 'scan' | 'on'
+  const map = {
+    off:  ['status-off',  '<span class="dot"></span> Desconectado'],
+    scan: ['status-scan', '<span class="dot"></span> Varrendo pasta...'],
+    on:   ['status-on',   '<span class="dot"></span> Conectado — monitorando']
+  };
+  statusEl.className = map[tipo][0];
+  statusEl.innerHTML = map[tipo][1];
+  btnConectar.style.display = tipo === 'off' ? 'inline-block' : 'none';
+  btnRevarrer.style.display = tipo === 'off' ? 'none' : 'inline-block';
+  btnDesconectar.style.display = tipo === 'off' ? 'none' : 'inline-block';
+}
+
+// ================================================================
+// INDEXEDDB — persistir handle da pasta mestre
+// ================================================================
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function salvarHandle(handle) {
+  const db = await abrirDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(handle, 'pastaMestre');
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function carregarHandle() {
+  const db = await abrirDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get('pastaMestre');
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function limparHandle() {
+  const db = await abrirDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  tx.objectStore(STORE_NAME).delete('pastaMestre');
+}
+
+async function garantirPermissao(handle) {
+  const opcoes = { mode: 'read' };
+  if ((await handle.queryPermission(opcoes)) === 'granted') return true;
+  if ((await handle.requestPermission(opcoes)) === 'granted') return true;
+  return false;
+}
+
+// ================================================================
+// VARREDURA RECURSIVA
+// Pasta mestre → subpastas (= projetos) → arquivos (qualquer profundidade)
+// ================================================================
+function temExtensaoValida(nome) {
+  const n = nome.toLowerCase();
+  return EXTENSOES_MONITORADAS.some(ext => n.endsWith(ext));
+}
+
+async function varrerPastaProjeto(dirHandle, projeto, caminhoAtual, resultado) {
+  for await (const [nome, handle] of dirHandle.entries()) {
+    const caminho = caminhoAtual ? `${caminhoAtual}/${nome}` : nome;
+    if (handle.kind === 'file') {
+      if (temExtensaoValida(nome)) {
+        resultado.push({ projeto, caminho, nome, handle, lastModified: 0 });
+      }
+    } else if (handle.kind === 'directory') {
+      // recursão pra subpastas dentro do projeto (ex: projeto/entrada/arquivo.txt)
+      await varrerPastaProjeto(handle, projeto, caminho, resultado);
+    }
+  }
+}
+
+async function varrerPastaMestre() {
+  setStatus('scan');
+  log('🔍 Varrendo pasta mestre...');
+  const novoRegistro = [];
+  let totalProjetos = 0;
+
+  for await (const [nomeProjeto, handle] of masterHandle.entries()) {
+    if (handle.kind !== 'directory') continue; // ignora arquivos soltos na raiz
+    totalProjetos++;
+    const arquivosDoProjeto = [];
+    await varrerPastaProjeto(handle, nomeProjeto, '', arquivosDoProjeto);
+    novoRegistro.push(...arquivosDoProjeto);
+  }
+
+  if (novoRegistro.length > 200) {
+    log(`⚠️ Encontrados ${novoRegistro.length} arquivos — acima do limite planejado de 200, mas vou monitorar todos mesmo assim.`);
+  }
+
+  registro = novoRegistro;
+  kpiProjetos.textContent = totalProjetos;
+  kpiArquivos.textContent = registro.length;
+  log(`✅ Varredura concluída: ${totalProjetos} projeto(s), ${registro.length} arquivo(s) encontrados.`);
+  renderizarArvore();
+  return registro;
+}
+
+function renderizarArvore() {
+  if (registro.length === 0) {
+    arvoreEl.innerHTML = 'Nenhum arquivo monitorável encontrado.';
+    return;
+  }
+  const porProjeto = {};
+  for (const item of registro) {
+    if (!porProjeto[item.projeto]) porProjeto[item.projeto] = [];
+    porProjeto[item.projeto].push(item);
+  }
+
+  arvoreEl.innerHTML = '';
+  for (const [projeto, arquivos] of Object.entries(porProjeto)) {
+    const div = document.createElement('div');
+    div.className = 'projeto';
+    div.innerHTML = `
+      <div class="projeto-header" data-projeto="${projeto}">
+        <span>📂 ${projeto}</span>
+        <span class="projeto-count">${arquivos.length} arquivo(s)</span>
+      </div>
+      <div class="arquivos" id="arquivos-${cssEscape(projeto)}">
+        ${arquivos.map(a => `
+          <div class="arquivo-linha" data-caminho="${a.projeto}/${a.caminho}">
+            <span class="arquivo-nome">${a.caminho}</span>
+            <span class="arquivo-tempo">aguardando</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    arvoreEl.appendChild(div);
+  }
+
+  arvoreEl.querySelectorAll('.projeto-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const id = 'arquivos-' + cssEscape(h.dataset.projeto);
+      document.getElementById(id).classList.toggle('aberto');
+    });
+  });
+}
+
+function cssEscape(str) {
+  return str.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+function atualizarLinhaArquivo(caminhoCompleto, texto) {
+  const linha = arvoreEl.querySelector(`.arquivo-linha[data-caminho="${caminhoCompleto}"] .arquivo-tempo`);
+  if (linha) linha.textContent = texto;
+}
+
+// ================================================================
+// MONITORAMENTO EM LOTES (evita checar 200 arquivos de uma vez só)
+// ================================================================
+function iniciarMonitoramento() {
+  pararMonitoramento();
+  setStatus('on');
+  filaChecagem = [...registro];
+  indiceFila = 0;
+  processarProximoLote();
+  agendarProximoCiclo();
+}
+
+function pararMonitoramento() {
+  if (timeoutLote) clearTimeout(timeoutLote);
+  if (timeoutCiclo) clearTimeout(timeoutCiclo);
+  timeoutLote = null;
+  timeoutCiclo = null;
+}
+
+function agendarProximoCiclo() {
+  timeoutCiclo = setTimeout(async () => {
+    kpiCiclo.textContent = new Date().toLocaleTimeString('pt-BR');
+    filaChecagem = [...registro];
+    indiceFila = 0;
+    processarProximoLote();
+    agendarProximoCiclo();
+  }, INTERVALO_CICLO_COMPLETO_MS);
+}
+
+async function processarProximoLote() {
+  const lote = filaChecagem.slice(indiceFila, indiceFila + TAMANHO_LOTE);
+  indiceFila += TAMANHO_LOTE;
+
+  for (const item of lote) {
+    try {
+      const file = await item.handle.getFile();
+      if (file.lastModified !== item.lastModified) {
+        const eraPrimeiraLeitura = item.lastModified === 0;
+        item.lastModified = file.lastModified;
+        const texto = await lerConteudo(file);
+        await processarArquivo(item.projeto, item.caminho, texto, file);
+        atualizarLinhaArquivo(`${item.projeto}/${item.caminho}`, 'ok ✓ ' + new Date().toLocaleTimeString('pt-BR'));
+        if (!eraPrimeiraLeitura) {
+          log(`🔄 <b>${item.projeto}/${item.caminho}</b> mudou — reprocessado.`);
+        }
+      }
+    } catch (err) {
+      atualizarLinhaArquivo(`${item.projeto}/${item.caminho}`, 'erro ⚠️');
+    }
+  }
+
+  if (indiceFila < filaChecagem.length) {
+    timeoutLote = setTimeout(processarProximoLote, INTERVALO_LOTE_MS);
+  }
+}
+
+// Lê o conteúdo do jeito certo dependendo da extensão.
+// .xlsx/.xls chegam como arraybuffer (você troca por SheetJS na sua lógica real).
+async function lerConteudo(file) {
+  const nome = file.name.toLowerCase();
+  if (nome.endsWith('.xlsx') || nome.endsWith('.xls')) {
+    return await file.arrayBuffer(); // use com XLSX.read(...) na sua função real
+  }
+  return await file.text();
+}
+
+// ================================================================
+// SUA LÓGICA DE VERDADE ENTRA AQUI
+// ================================================================
+async function processarArquivo(projeto, caminho, conteudo, fileObj) {
+  // Ponto de entrada único pra plugar o parser de cada projeto.
+  // Exemplo de roteamento por nome de projeto (ajuste pros seus nomes reais):
+  //
+  // if (projeto === 'Pendencia PTL') return processarPendenciaPTL(conteudo);
+  // if (projeto === 'Abastecimento PCP') return processarAbastecimentoPCP(conteudo);
+  //
+  console.log(`[processarArquivo] ${projeto}/${caminho} — ${typeof conteudo === 'string' ? conteudo.length + ' chars' : conteudo.byteLength + ' bytes'}`);
+}
+
+// ================================================================
+// AÇÕES DE UI
+// ================================================================
+async function conectarPastaMestre() {
+  try {
+    masterHandle = await window.showDirectoryPicker();
+    await salvarHandle(masterHandle);
+    await varrerPastaMestre();
+    iniciarMonitoramento();
+  } catch (err) {
+    if (err.name !== 'AbortError') log(`Erro ao conectar: ${err.message}`);
+  }
+}
+
+async function revarrer() {
+  if (!masterHandle) return;
+  pararMonitoramento();
+  await varrerPastaMestre();
+  iniciarMonitoramento();
+}
+
+async function desconectar() {
+  pararMonitoramento();
+  masterHandle = null;
+  registro = [];
+  await limparHandle();
+  setStatus('off');
+  arvoreEl.innerHTML = 'Nenhuma pasta conectada ainda.';
+  kpiProjetos.textContent = '0';
+  kpiArquivos.textContent = '0';
+  kpiCiclo.textContent = '-';
+  log('🔌 Desconectado.');
+}
+
+btnConectar.addEventListener('click', conectarPastaMestre);
+btnRevarrer.addEventListener('click', revarrer);
+btnDesconectar.addEventListener('click', desconectar);
+
+// reconexão automática ao abrir a página
+(async function tentarReconectar() {
+  const handleSalvo = await carregarHandle();
+  if (!handleSalvo) return;
+  const temPermissao = await garantirPermissao(handleSalvo);
+  if (!temPermissao) {
+    log('ℹ️ Pasta mestre salva encontrada, mas é preciso clicar em conectar de novo (permissão expirou).');
+    return;
+  }
+  masterHandle = handleSalvo;
+  await varrerPastaMestre();
+  iniciarMonitoramento();
+})();
+
+  </script>
+</body>
+</html>
